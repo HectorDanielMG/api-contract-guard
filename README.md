@@ -58,6 +58,14 @@ contract-guard compare api/openapi.yaml api/openapi-proposed.yaml \
 
 Si el comando detecta incompatibilidades, `--fail-on-breaking` devuelve el código `1`. Sin esa opción, el análisis termina con código `0` aunque haya hallazgos incompatibles. Los errores al leer el archivo o interpretar la especificación devuelven `2`.
 
+### Códigos de salida
+
+| Código | Significado |
+| --- | --- |
+| `0` | El análisis terminó correctamente. Puede incluir incompatibilidades si no se indicó `--fail-on-breaking`. |
+| `1` | Se encontraron incompatibilidades y se indicó `--fail-on-breaking`. |
+| `2` | No se pudo leer una especificación o guardar el informe. |
+
 ### Formatos de informe
 
 ```bash

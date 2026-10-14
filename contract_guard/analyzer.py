@@ -174,6 +174,19 @@ def _compare_operation(
         else:
             _add(findings, "compatible", "parameter.optional_added", f"{location} · {key[0]}:{key[1]}",
                  f"Se agregó el parámetro opcional '{key[1]}'.")
+    for key in sorted(old_params.keys() & new_params.keys()):
+        old_param, new_param = old_params[key], new_params[key]
+        param_location = f"{location} · {key[0]}:{key[1]}"
+        if not old_param.get("required", False) and new_param.get("required", False):
+            _add(findings, "breaking", "parameter.required_changed", param_location,
+                 f"El parámetro '{key[1]}' ahora es obligatorio.")
+        _compare_schema(
+            _resolve(old_param.get("schema", {}), old_spec),
+            _resolve(new_param.get("schema", {}), new_spec),
+            param_location,
+            findings,
+            direction="request",
+        )
 
     old_body = _resolve(old.get("requestBody", {}), old_spec)
     new_body = _resolve(new.get("requestBody", {}), new_spec)
@@ -183,6 +196,14 @@ def _compare_operation(
                  "El cuerpo de la solicitud ahora es obligatorio.")
         old_content = old_body.get("content", {})
         new_content = new_body.get("content", {})
+        for media_type in sorted(old_content.keys() - new_content.keys()):
+            _add(findings, "breaking", "request_body.media_type_removed",
+                 f"{location} · requestBody.{media_type}",
+                 f"Se dejó de aceptar el formato '{media_type}'.")
+        for media_type in sorted(new_content.keys() - old_content.keys()):
+            _add(findings, "compatible", "request_body.media_type_added",
+                 f"{location} · requestBody.{media_type}",
+                 f"Se agregó el formato '{media_type}'.")
         for media_type in sorted(old_content.keys() & new_content.keys()):
             a = _resolve(old_content[media_type].get("schema", {}), old_spec)
             b = _resolve(new_content[media_type].get("schema", {}), new_spec)
@@ -197,10 +218,21 @@ def _compare_operation(
         for code in sorted(old_responses.keys() - new_responses.keys()):
             _add(findings, "breaking", "response.removed", f"{location} · respuesta {code}",
                  f"Se eliminó la respuesta '{code}'.")
+        for code in sorted(new_responses.keys() - old_responses.keys()):
+            _add(findings, "compatible", "response.added", f"{location} · respuesta {code}",
+                 f"Se agregó la respuesta '{code}'.")
         for code in sorted(old_responses.keys() & new_responses.keys()):
             old_resp, new_resp = old_responses[code], new_responses[code]
             old_content = old_resp.get("content", {}) if isinstance(old_resp, dict) else {}
             new_content = new_resp.get("content", {}) if isinstance(new_resp, dict) else {}
+            for media_type in sorted(old_content.keys() - new_content.keys()):
+                _add(findings, "breaking", "response.media_type_removed",
+                     f"{location} · {code}.{media_type}",
+                     f"Se dejó de devolver el formato '{media_type}'.")
+            for media_type in sorted(new_content.keys() - old_content.keys()):
+                _add(findings, "compatible", "response.media_type_added",
+                     f"{location} · {code}.{media_type}",
+                     f"Se agregó el formato '{media_type}'.")
             for media_type in sorted(old_content.keys() & new_content.keys()):
                 a = _resolve(old_content[media_type].get("schema", {}), old_spec)
                 b = _resolve(new_content[media_type].get("schema", {}), new_spec)

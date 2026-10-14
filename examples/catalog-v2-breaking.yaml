@@ -1,0 +1,51 @@
+openapi: 3.0.3
+info:
+  title: API de catálogo
+  version: 2.0.0
+paths:
+  /products:
+    get:
+      responses:
+        '200':
+          description: Productos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProduct'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+components:
+  schemas:
+    Product:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [active]
+    CreateProduct:
+      type: object
+      required: [name, warehouseCode]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        warehouseCode:
+          type: string
